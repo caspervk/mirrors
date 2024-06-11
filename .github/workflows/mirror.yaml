@@ -1,0 +1,34 @@
+name: Mirror repositories
+
+on:
+  # At minute 51 past every 8th hour
+  schedule:
+    - cron: "51 */8 * * *"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/isaacs/github/issues/415#issuecomment-561700485
+      - name: Mirror
+        run: |
+          git clone --mirror "https://git.caspervk.net/caspervk/$REPO.git"
+          cd "$REPO.git"
+          git remote add github "https://caspervk:$PUSH_TOKEN@github.com/caspervk/$REPO.git"
+          git push --mirror github
+        env:
+          # Token created on https://github.com/settings/tokens/new with
+          # scopes: repo (all) and workflow. Linked to this workflow on
+          # https://github.com/caspervk/mirrors/settings/secrets/actions/new.
+          PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
+          REPO: ${{ matrix.repo }}
+    # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
+    strategy:
+      matrix:
+        # All repos must manually be created on GitHub: https://github.com/new
+        repo:
+          - AndroidAPS
+          - nixos
+
